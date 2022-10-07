@@ -2904,10 +2904,12 @@ js_AddConsumer(jsConsumerInfo **new_ci, jsCtx *js,
     if (cfg == NULL)
         return nats_setError(NATS_INVALID_ARG, "%s", jsErrConsumerConfigRequired);
 
+    fprintf(stderr, "[%s:%d] js_AddConsumer stream=%s\n", __FILE__, __LINE__, stream);
     s = _checkStreamName(stream);
     if (s != NATS_OK)
         return NATS_UPDATE_ERR_STACK(s);
 
+    fprintf(stderr, "[%s:%d] js_AddConsumer cfg->Name=%s cfg->Durable=%s\n", __FILE__, __LINE__, cfg->Name, cfg->Durable);
     if (!nats_IsStringEmpty(cfg->Name))
     {
         if ((s = js_checkConsName(cfg->Name, false)) != NATS_OK)
@@ -2952,13 +2954,20 @@ js_AddConsumer(jsConsumerInfo **new_ci, jsCtx *js,
         if (freePfx)
             NATS_FREE((char*) o.Prefix);
     }
+    else 
+    {
+        fprintf(stderr, "[%s:%d] js &freePfx, js, opts, &o);AddConsumer Set Opts FAIL %d %s\n", __FILE__, __LINE__, s, natsStatus_GetText(s));
+    }
     IFOK(s, _marshalConsumerCreateReq(&buf, stream, cfg));
+    fprintf(stderr, "[%s:%d] IFOK(s, _marshalConsumerCreateReq(&buf, stream, cfg)) %d %s\n", __FILE__, __LINE__, s, natsStatus_GetText(s));
 
     // Send the request
     IFOK_JSR(s, natsConnection_Request(&resp, nc, subj, natsBuf_Data(buf), natsBuf_Len(buf), o.Wait));
+    fprintf(stderr, "[%s:%d] IFOK_JSR(s, natsConnection_Request(&resp, nc, subj, natsBuf_Data(buf), natsBuf_Len(buf), o.Wait)) %d %s\n", __FILE__, __LINE__, s, natsStatus_GetText(s));
 
     // If we got a response, check for error or return the consumer info result.
     IFOK(s, _unmarshalConsumerCreateOrGetResp(new_ci, resp, errCode));
+    fprintf(stderr, "[%s:%d] IFOK(s, _unmarshalConsumerCreateOrGetResp(new_ci, resp, errCode)) %d %s\n", __FILE__, __LINE__, s, natsStatus_GetText(s));
 
     NATS_FREE(subj);
     natsMsg_Destroy(resp);
